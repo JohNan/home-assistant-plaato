@@ -37,5 +37,24 @@
     "create_entry": {
       "default": "Your Plaato {device_type} with name **{device_name}** was successfully setup!"
     }
+  },
+  "options": {
+    "step": {
+      "webhook": {
+        "title": "Options for Plaato",
+        "description": "Set the update interval and configure a webhook to relay data to.\nWebhook info:\n\n- URL: `{webhook_url}`\n- Method: POST\n\n",
+        "data": {
+          "update_interval": "Update interval (minutes)",
+          "webhook_relay": "Webhook url to relay Airlock webhook data to"
+        }
+      },
+      "user": {
+        "title": "Options for Plaato",
+        "description": "Set the update interval",
+        "data": {
+          "update_interval": "Update interval (minutes)"
+        }
+      }
+    }
   }
 }

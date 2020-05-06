@@ -7,7 +7,7 @@ from pyplaato.plaato import PlaatoKeg
 from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_OPENING,
     DEVICE_CLASS_PROBLEM,
-    BinarySensorDevice,
+    BinarySensorEntity,
 )
 from homeassistant.const import CONF_TOKEN
 
@@ -41,7 +41,7 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
     return False
 
 
-class PlaatoBinarySensor(PlaatoEntity, BinarySensorDevice):
+class PlaatoBinarySensor(PlaatoEntity, BinarySensorEntity):
     """Representation of a Binary Sensor."""
 
     @property

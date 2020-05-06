@@ -1,6 +1,8 @@
 """Support for Plaato devices."""
 
 import asyncio
+import json
+import requests
 from datetime import timedelta
 import logging
 
@@ -23,13 +25,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady, InvalidStateError
 from homeassistant.helpers import aiohttp_client
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.dispatcher import async_dispatcher_send, async_dispatcher_connect
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
     CONF_DEVICE_NAME,
     CONF_DEVICE_TYPE,
     CONF_USE_WEBHOOK,
+    CONF_UPDATE_INTERVAL,
+    CONF_WEBHOOK_RELAY,
     DOMAIN,
     PLATFORMS,
 )
@@ -40,6 +44,7 @@ DEPENDENCIES = ["webhook"]
 
 PLAATO_DEVICE_SENSORS = "sensors"
 PLAATO_DEVICE_ATTRS = "attrs"
+PLAATO_DEVICE_RAW_DATA = "raw_data"
 
 ATTR_DEVICE_ID = "device_id"
 ATTR_DEVICE_NAME = "device_name"
@@ -92,6 +97,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     if use_webhook:
         setup_webhook(hass, entry)
+        async_dispatcher_connect(hass, f"{DOMAIN}.webhook_relay", relay_webhook)
     else:
         await async_setup_coordinator(hass, entry)
 
@@ -105,11 +111,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 
+def relay_webhook(data, url):
+    """Relay webhook data."""
+    response = requests.post(
+        url=url,
+        data=json.dumps(data),
+        timeout=10
+    )
+    if response.status_code not in (HTTP_OK, 201):
+        _LOGGER.exception(
+            "Error relaying webhook data. Response %d: %s:",
+            response.status_code,
+            response.reason,
+        )
+
+
 def setup_webhook(hass: HomeAssistant, entry: ConfigEntry):
     """Init webhook based on config entry."""
     if entry.data[CONF_WEBHOOK_ID] is not None:
         webhook_id = entry.data[CONF_WEBHOOK_ID]
         device_name = entry.data[CONF_DEVICE_NAME]
+        hass.data[DOMAIN][webhook_id] = entry
         hass.components.webhook.async_register(
             DOMAIN, f"{DOMAIN}.{device_name}", webhook_id, handle_webhook
         )
@@ -121,8 +143,9 @@ async def async_setup_coordinator(hass: HomeAssistant, entry: ConfigEntry):
     """Init auth token based on config entry."""
     auth_token = entry.data.get(CONF_TOKEN)
     device_type = entry.data.get(CONF_DEVICE_TYPE)
+    scan_interval = timedelta(minutes=entry.options.get(CONF_UPDATE_INTERVAL, 5))
 
-    coordinator = PlaatoCoordinator(hass, auth_token, device_type)
+    coordinator = PlaatoCoordinator(hass, auth_token, device_type, scan_interval)
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
@@ -195,6 +218,11 @@ async def handle_webhook(hass, webhook_id, request):
         _LOGGER.warning("An error occurred when parsing webhook data <%s>", error)
         return
 
+    webhook_relay = hass.data[DOMAIN][webhook_id].options.get(
+        CONF_WEBHOOK_RELAY, None)
+    if webhook_relay:
+        async_dispatcher_send(hass, f"{DOMAIN}.webhook_relay", data, webhook_relay)
+
     device_id = _device_id(data)
 
     attrs = {
@@ -218,6 +246,7 @@ async def handle_webhook(hass, webhook_id, request):
     hass.data[DOMAIN][device_id] = {
         PLAATO_DEVICE_ATTRS: attrs,
         PLAATO_DEVICE_SENSORS: sensors,
+        PLAATO_DEVICE_RAW_DATA: data
     }
 
     async_dispatcher_send(hass, SENSOR_UPDATE, device_id)
@@ -233,15 +262,16 @@ def _device_id(data):
 class PlaatoCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
-    def __init__(self, hass, auth_token, device_type: PlaatoDeviceType):
+    def __init__(self, hass, auth_token, device_type: PlaatoDeviceType, scan_interval):
         """Initialize."""
         self.api = Plaato(auth_token=auth_token)
         self.hass = hass
         self.device_type = device_type
         self.platforms = []
+        self.scan_interval = scan_interval
 
         super().__init__(
-            hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL,
+            hass, _LOGGER, name=DOMAIN, update_interval=self.scan_interval,
         )
 
     async def _async_update_data(self):
