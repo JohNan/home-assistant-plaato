@@ -23,7 +23,7 @@ from .const import (
     PLACEHOLDER_WEBHOOK_URL,
 )
 from .const import DOMAIN  # pylint:disable=unused-import
-from ...core import callback
+from homeassistant.core import callback
 
 _LOGGER = logging.getLogger(__package__)
 
