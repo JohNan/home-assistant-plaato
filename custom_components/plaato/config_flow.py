@@ -15,7 +15,6 @@ from .const import (
     CONF_DEVICE_TYPE,
     CONF_USE_WEBHOOK,
     CONF_UPDATE_INTERVAL,
-    CONF_WEBHOOK_RELAY,
     DOCS_URL,
     PLACEHOLDER_DEVICE_NAME,
     PLACEHOLDER_DEVICE_TYPE,
@@ -179,10 +178,6 @@ class PlaatoOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
-        use_webhook = self._config_entry.data.get(CONF_USE_WEBHOOK, False)
-        if use_webhook:
-            return await self.async_step_webhook()
-
         return await self.async_step_user()
 
     async def async_step_user(self, user_input=None):
@@ -200,32 +195,4 @@ class PlaatoOptionsFlowHandler(config_entries.OptionsFlow):
                     ): cv.positive_int
                 }
             )
-        )
-
-    async def async_step_webhook(self, user_input=None):
-        """Manage the options for webhook device."""
-        if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
-
-        webhook_url = ""
-        webhook_id = self._config_entry.data.get(CONF_WEBHOOK_ID, None)
-        if webhook_id:
-            webhook_url = self.hass.components.webhook.async_generate_url(
-                webhook_id)
-        return self.async_show_form(
-            step_id="webhook",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_UPDATE_INTERVAL,
-                        default=self._config_entry.options.get(CONF_UPDATE_INTERVAL, 5)
-                    ): cv.positive_int,
-                    vol.Optional(
-                        CONF_WEBHOOK_RELAY,
-                        default=self._config_entry.options.get(CONF_WEBHOOK_RELAY, "")
-                    ): str,
-                }
-            ),
-            description_placeholders={
-                PLACEHOLDER_WEBHOOK_URL: webhook_url}
         )

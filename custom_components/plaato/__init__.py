@@ -1,8 +1,6 @@
 """Support for Plaato devices."""
 
 import asyncio
-import json
-import requests
 from datetime import timedelta
 import logging
 
@@ -33,7 +31,6 @@ from .const import (
     CONF_DEVICE_TYPE,
     CONF_USE_WEBHOOK,
     CONF_UPDATE_INTERVAL,
-    CONF_WEBHOOK_RELAY,
     DOMAIN,
     PLATFORMS,
 )
@@ -97,7 +94,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     if use_webhook:
         setup_webhook(hass, entry)
-        async_dispatcher_connect(hass, f"{DOMAIN}.webhook_relay", relay_webhook)
     else:
         await async_setup_coordinator(hass, entry)
 
@@ -109,22 +105,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     entry.add_update_listener(async_reload_entry)
     return True
-
-
-def relay_webhook(data, url):
-    """Relay webhook data."""
-    response = requests.post(
-        url=url,
-        data=json.dumps(data),
-        timeout=10
-    )
-    if response.status_code not in (HTTP_OK, 201):
-        _LOGGER.exception(
-            "Error relaying webhook data. Response %d: %s:",
-            response.status_code,
-            response.reason,
-        )
-
 
 def setup_webhook(hass: HomeAssistant, entry: ConfigEntry):
     """Init webhook based on config entry."""
@@ -217,11 +197,6 @@ async def handle_webhook(hass, webhook_id, request):
     except vol.MultipleInvalid as error:
         _LOGGER.warning("An error occurred when parsing webhook data <%s>", error)
         return
-
-    webhook_relay = hass.data[DOMAIN][webhook_id].options.get(
-        CONF_WEBHOOK_RELAY, None)
-    if webhook_relay:
-        async_dispatcher_send(hass, f"{DOMAIN}.webhook_relay", data, webhook_relay)
 
     device_id = _device_id(data)
 
