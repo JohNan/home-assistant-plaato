@@ -1,0 +1,7 @@
+{
+  "name": "Plaato",
+  "iot_class": "Cloud Polling",
+  "homeassistant": "0.110.0",
+  "zip_release": true,
+  "filename": "plaato.zip"
+}
