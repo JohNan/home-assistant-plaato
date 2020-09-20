@@ -6,7 +6,7 @@ from typing import Optional
 from pyplaato.plaato import PlaatoKeg
 
 from homeassistant.components.sensor import DEVICE_CLASS_TEMPERATURE
-from homeassistant.const import CONF_TOKEN, UNIT_PERCENTAGE
+from homeassistant.const import CONF_TOKEN, PERCENTAGE
 from homeassistant.helpers.dispatcher import (
     async_dispatcher_connect,
     async_dispatcher_send,
@@ -148,6 +148,6 @@ class PlaatoSensor(PlaatoEntity):
         if self._sensor_type == ATTR_BPM:
             return "bpm"
         if self._sensor_type == ATTR_ABV:
-            return UNIT_PERCENTAGE
+            return PERCENTAGE
 
         return ""
