@@ -2,20 +2,19 @@
   "title": "Plaato",
   "config": {
     "step": {
-      "device_type": {
+      "user": {
         "title": "Set up the Plaato devices",
-        "description": "Select what devices you have",
+        "description": "[%key:common::config_flow::description::confirm_setup%]",
         "data": {
           "device_name": "Name your device",
-          "device_type": "Type of Plaato device",
-          "token": "The Auth Token obtained from Plaato"
+          "device_type": "Type of Plaato device"
         }
       },
-      "validate": {
+      "api_method": {
         "title": "Select API method",
         "description": "To be able to query the API an `auth_token` is required which can be obtained by following [these](https://plaato.zendesk.com/hc/en-us/articles/360003234717-Auth-token) instructions\n\n Selected device: **{device_type}** \n\nIf you rather use the built in webhook method (Airlock only) please check the box below and leave Auth Token blank",
         "data": {
-          "use_webhook": "Use webhook (Airlock only)",
+          "use_webhook": "Use webhook",
           "token": "Paste Auth Token here"
         }
       },
@@ -30,9 +29,9 @@
       "no_api_method": "You need to add an auth token or select webhook"
     },
     "abort": {
-      "no_device": "No device was selected",
-      "one_instance_allowed": "Only a single instance is necessary.",
-      "not_internet_accessible": "Your Home Assistant instance needs to be accessible from the internet to receive messages from Plaato Airlock."
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "webhook_not_internet_accessible": "[%key:common::config_flow::abort::webhook_not_internet_accessible%]",
+      "already_configured": "[%key:common::config_flow::abort::already_configured_account%]"
     },
     "create_entry": {
       "default": "Your Plaato {device_type} with name **{device_name}** was successfully setup!"
@@ -41,12 +40,8 @@
   "options": {
     "step": {
       "webhook": {
-        "title": "Options for Plaato",
-        "description": "Set the update interval and configure a webhook to relay data to.\nWebhook info:\n\n- URL: `{webhook_url}`\n- Method: POST\n\n",
-        "data": {
-          "update_interval": "Update interval (minutes)",
-          "webhook_relay": "Webhook url to relay Airlock webhook data to"
-        }
+        "title": "Options for Plaato Airlock",
+        "description": "Webhook info:\n\n- URL: `{webhook_url}`\n- Method: POST\n\n"
       },
       "user": {
         "title": "Options for Plaato",
