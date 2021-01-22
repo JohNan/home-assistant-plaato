@@ -19,7 +19,7 @@ from .const import (
     PLACEHOLDER_DEVICE_NAME,
     PLACEHOLDER_DEVICE_TYPE,
     PLACEHOLDER_DOCS_URL,
-    PLACEHOLDER_WEBHOOK_URL,
+    PLACEHOLDER_WEBHOOK_URL, DEFAULT_SCAN_INTERVAL,
 )
 from .const import DOMAIN  # pylint:disable=unused-import
 
@@ -200,7 +200,7 @@ class PlaatoOptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Optional(
                         CONF_SCAN_INTERVAL,
-                        default=self._config_entry.options.get(CONF_SCAN_INTERVAL, 5),
+                        default=self._config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
                     ): cv.positive_int
                 }
             ),

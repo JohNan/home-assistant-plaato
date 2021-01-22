@@ -33,7 +33,7 @@ from homeassistant.const import (
     TEMP_CELSIUS,
     TEMP_FAHRENHEIT,
     VOLUME_GALLONS,
-    VOLUME_LITERS,
+    VOLUME_LITERS, CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady, InvalidStateError
@@ -54,7 +54,7 @@ from .const import (
     DOMAIN,
     PLATFORMS,
     SENSOR_DATA,
-    UNDO_UPDATE_LISTENER,
+    UNDO_UPDATE_LISTENER, DEFAULT_SCAN_INTERVAL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,8 +81,6 @@ WEBHOOK_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
-
-SCAN_INTERVAL = timedelta(minutes=10)
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -130,7 +128,13 @@ async def async_setup_coordinator(hass: HomeAssistant, entry: ConfigEntry):
     auth_token = entry.data[CONF_TOKEN]
     device_type = entry.data[CONF_DEVICE_TYPE]
 
-    coordinator = PlaatoCoordinator(hass, auth_token, device_type)
+    if entry.options.get(CONF_SCAN_INTERVAL):
+        update_interval = timedelta(
+            minutes=entry.options[CONF_SCAN_INTERVAL])
+    else:
+        update_interval = DEFAULT_SCAN_INTERVAL
+
+    coordinator = PlaatoCoordinator(hass, auth_token, device_type, update_interval)
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
@@ -234,7 +238,7 @@ def _device_id(data):
 class PlaatoCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
-    def __init__(self, hass, auth_token, device_type: PlaatoDeviceType):
+    def __init__(self, hass, auth_token, device_type: PlaatoDeviceType, update_interval: timedelta):
         """Initialize."""
         self.api = Plaato(auth_token=auth_token)
         self.hass = hass
@@ -245,7 +249,7 @@ class PlaatoCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=SCAN_INTERVAL,
+            update_interval=update_interval,
         )
 
     async def _async_update_data(self):
