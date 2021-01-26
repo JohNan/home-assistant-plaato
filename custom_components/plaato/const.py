@@ -1,4 +1,4 @@
-"""Const for GPSLogger."""
+"""Const for Plaato."""
 from datetime import timedelta
 
 DOMAIN = "plaato"
@@ -23,3 +23,4 @@ DEVICE_TYPE = "device_type"
 DEVICE_ID = "device_id"
 UNDO_UPDATE_LISTENER = "undo_update_listener"
 DEFAULT_SCAN_INTERVAL = timedelta(minutes=5)
+MIN_UPDATE_INTERVAL = timedelta(minutes=1)

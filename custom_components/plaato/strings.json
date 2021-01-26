@@ -1,10 +1,9 @@
 {
-  "title": "Plaato",
   "config": {
     "step": {
       "user": {
         "title": "Set up the Plaato devices",
-        "description": "Select what devices you have",
+        "description": "[%key:common::config_flow::description::confirm_setup%]",
         "data": {
           "device_name": "Name your device",
           "device_type": "Type of Plaato device"
@@ -29,9 +28,9 @@
       "no_api_method": "You need to add an auth token or select webhook"
     },
     "abort": {
-      "single_instance_allowed": "Already configured. Only a single configuration possible.",
-      "webhook_not_internet_accessible": "Your Home Assistant instance needs to be accessible from the internet to receive webhook messages.",
-      "already_configured": "Device is already configured"
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "webhook_not_internet_accessible": "[%key:common::config_flow::abort::webhook_not_internet_accessible%]",
+      "already_configured": "[%key:common::config_flow::abort::already_configured_account%]"
     },
     "create_entry": {
       "default": "Your Plaato {device_type} with name **{device_name}** was successfully setup!"
