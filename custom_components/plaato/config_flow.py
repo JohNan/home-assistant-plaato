@@ -15,11 +15,12 @@ from .const import (
     CONF_DEVICE_NAME,
     CONF_DEVICE_TYPE,
     CONF_USE_WEBHOOK,
+    DEFAULT_SCAN_INTERVAL,
     DOCS_URL,
     PLACEHOLDER_DEVICE_NAME,
     PLACEHOLDER_DEVICE_TYPE,
     PLACEHOLDER_DOCS_URL,
-    PLACEHOLDER_WEBHOOK_URL, DEFAULT_SCAN_INTERVAL,
+    PLACEHOLDER_WEBHOOK_URL,
 )
 from .const import DOMAIN  # pylint:disable=unused-import
 
@@ -104,9 +105,9 @@ class PlaatoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 },
             )
 
-        return await self._async_step_create_entry()
+        return await self._async_create_entry()
 
-    async def _async_step_create_entry(self):
+    async def _async_create_entry(self):
         """Create the entry step."""
 
         webhook_id = self._init_info.get(CONF_WEBHOOK_ID, None)
@@ -159,11 +160,9 @@ class PlaatoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def _get_error(device_type: PlaatoDeviceType):
-        return (
-            "no_api_method"
-            if device_type == PlaatoDeviceType.Airlock
-            else "no_auth_token"
-        )
+        if device_type == PlaatoDeviceType.Airlock:
+            return "no_api_method"
+        return "no_auth_token"
 
     @staticmethod
     @callback
@@ -200,7 +199,9 @@ class PlaatoOptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Optional(
                         CONF_SCAN_INTERVAL,
-                        default=self._config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+                        default=self._config_entry.options.get(
+                            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                        ),
                     ): cv.positive_int
                 }
             ),

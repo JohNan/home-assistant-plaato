@@ -27,13 +27,14 @@ import voluptuous as vol
 from homeassistant.components.sensor import DOMAIN as SENSOR
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_SCAN_INTERVAL,
     CONF_TOKEN,
     CONF_WEBHOOK_ID,
     HTTP_OK,
     TEMP_CELSIUS,
     TEMP_FAHRENHEIT,
     VOLUME_GALLONS,
-    VOLUME_LITERS, CONF_SCAN_INTERVAL,
+    VOLUME_LITERS,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady, InvalidStateError
@@ -47,6 +48,7 @@ from .const import (
     CONF_DEVICE_TYPE,
     CONF_USE_WEBHOOK,
     COORDINATOR,
+    DEFAULT_SCAN_INTERVAL,
     DEVICE,
     DEVICE_ID,
     DEVICE_NAME,
@@ -54,7 +56,7 @@ from .const import (
     DOMAIN,
     PLATFORMS,
     SENSOR_DATA,
-    UNDO_UPDATE_LISTENER, DEFAULT_SCAN_INTERVAL,
+    UNDO_UPDATE_LISTENER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -129,8 +131,7 @@ async def async_setup_coordinator(hass: HomeAssistant, entry: ConfigEntry):
     device_type = entry.data[CONF_DEVICE_TYPE]
 
     if entry.options.get(CONF_SCAN_INTERVAL):
-        update_interval = timedelta(
-            minutes=entry.options[CONF_SCAN_INTERVAL])
+        update_interval = timedelta(minutes=entry.options[CONF_SCAN_INTERVAL])
     else:
         update_interval = DEFAULT_SCAN_INTERVAL
 
@@ -176,30 +177,22 @@ async def async_unload_webhook(hass: HomeAssistant, entry: ConfigEntry):
     """Unload webhook based entry."""
     if entry.data[CONF_WEBHOOK_ID] is not None:
         hass.components.webhook.async_unregister(entry.data[CONF_WEBHOOK_ID])
-
-    unloaded = all(
-        await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in PLATFORMS
-            ]
-        )
-    )
-    if unloaded:
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unloaded
+    return await async_unload_platforms(hass, entry, PLATFORMS)
 
 
 async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
     """Unload auth token based entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
+    return await async_unload_platforms(hass, entry, coordinator.platforms)
+
+
+async def async_unload_platforms(hass: HomeAssistant, entry: ConfigEntry, platforms):
+    """Unload platforms."""
     unloaded = all(
         await asyncio.gather(
             *[
                 hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in PLATFORMS
-                if platform in coordinator.platforms
+                for platform in platforms
             ]
         )
     )
@@ -238,7 +231,13 @@ def _device_id(data):
 class PlaatoCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
-    def __init__(self, hass, auth_token, device_type: PlaatoDeviceType, update_interval: timedelta):
+    def __init__(
+        self,
+        hass,
+        auth_token,
+        device_type: PlaatoDeviceType,
+        update_interval: timedelta,
+    ):
         """Initialize."""
         self.api = Plaato(auth_token=auth_token)
         self.hass = hass
