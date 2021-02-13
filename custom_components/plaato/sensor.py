@@ -13,7 +13,7 @@ from homeassistant.helpers.dispatcher import (
 )
 
 from . import ATTR_TEMP, SENSOR_UPDATE
-from ...core import callback
+from homeassistant.core import callback
 from .const import (
     CONF_USE_WEBHOOK,
     COORDINATOR,
