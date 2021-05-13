@@ -7,5 +7,6 @@
   "after_dependencies": ["cloud"],
   "codeowners": ["@JohNan"],
   "version": "v1.2.7",
+  "issue tracker": "https://github.com/JohNan/home-assistant-plaato/issues", 
   "requirements": ["pyplaato==0.0.15"]
 }
